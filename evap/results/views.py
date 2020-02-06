@@ -93,11 +93,28 @@ def update_template_cache_of_published_evaluations_in_course(course):
 
 
 def get_evaluations_with_prefetched_data(evaluations):
+    from datetime import datetime
+    started = datetime.now()
     if isinstance(evaluations, QuerySet):
-        participant_counts = evaluations.annotate(num_participants=Count("participants")).values_list("num_participants", flat=True)
-        voter_counts = evaluations.annotate(num_voters=Count("voters")).values_list("num_voters", flat=True)
-        course_evaluations_counts = evaluations.annotate(num_course_evaluations=Count("course__evaluations")).values_list("num_course_evaluations", flat=True)
+        from django.db import models
+        from django.db.models import OuterRef, Subquery
+        from django.db.models.functions import Coalesce
+        participant_counts = Subquery(evaluations.filter(pk=OuterRef('pk')).order_by()
+                                      .annotate(num_participants=Coalesce('_participant_count', Count("participants")))
+                                      .values_list("num_participants", flat=True), output_field=models.IntegerField())
+        voter_counts = Subquery(evaluations.filter(pk=OuterRef('pk')).order_by()
+                                .annotate(num_voters=Coalesce('_voter_count', Count("voters")))
+                                .values_list("num_voters", flat=True), output_field=models.IntegerField())
+        course_evaluations_counts = Subquery(evaluations.filter(pk=OuterRef('pk')).order_by()
+                                             .annotate(course_evaluation_count=Count("course__evaluations"))
+                                             .values_list("course_evaluation_count", flat=True),
+                                             output_field=models.IntegerField())
         evaluations = (evaluations
+            .annotate(
+                num_participants=participant_counts,
+                num_voters=voter_counts,
+                course_evaluations_count=course_evaluations_counts,
+            )
             .select_related("course__type")
             .prefetch_related(
                 "course__degrees",
@@ -105,17 +122,32 @@ def get_evaluations_with_prefetched_data(evaluations):
                 "course__responsibles",
             )
         )
-        for evaluation, participant_count, voter_count, course_evaluations_count in zip(evaluations, participant_counts, voter_counts, course_evaluations_counts):
-            if evaluation._participant_count is None:
-                evaluation.num_participants = participant_count
-                evaluation.num_voters = voter_count
-            evaluation.course_evaluations_count = course_evaluations_count
+
+        #participant_counts = evaluations.annotate(num_participants=Count("participants")).values_list("num_participants", flat=True)
+        #voter_counts = evaluations.annotate(num_voters=Count("voters")).values_list("num_voters", flat=True)
+        #course_evaluations_counts = evaluations.annotate(num_course_evaluations=Count("course__evaluations")).values_list("num_course_evaluations", flat=True)
+        #evaluations = (evaluations
+        #    .select_related("course__type")
+        #    .prefetch_related(
+        #        "course__degrees",
+        #        "course__semester",
+        #        "course__responsibles",
+        #    )
+        #)
+        #for evaluation, participant_count, voter_count, course_evaluations_count in zip(evaluations, participant_counts, voter_counts, course_evaluations_counts):
+        #    if evaluation._participant_count is None:
+        #        evaluation.num_participants = participant_count
+        #        evaluation.num_voters = voter_count
+        #    evaluation.course_evaluations_count = course_evaluations_count
+        len(evaluations)
+        print(datetime.now() - started)
     for evaluation in evaluations:
         if not evaluation.is_single_result:
             evaluation.distribution = calculate_average_distribution(evaluation)
             evaluation.avg_grade = distribution_to_grade(evaluation.distribution)
         else:
             evaluation.single_result_rating_result = get_single_result_rating_result(evaluation)
+    print(datetime.now() - started)
     return evaluations
 
 
