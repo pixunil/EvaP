@@ -66,8 +66,11 @@ class EvaluationForm(forms.ModelForm):
         # Ensure all locked questionnaires still have the same status (included or not)
         locked_qs = self.fields['general_questionnaires'].queryset.filter(is_locked=True)
 
-        not_locked = [q for q in self.cleaned_data.get('general_questionnaires') if q not in locked_qs]
-        locked = [q.pk for q in self.instance.general_contribution.questionnaires.filter(is_locked=True)]
+        not_locked = []
+        if self.cleaned_data.get('general_questionnaires'):
+            not_locked = [q for q in self.cleaned_data.get('general_questionnaires') if q not in locked_qs]
+
+        locked = [q for q in self.instance.general_contribution.questionnaires.filter(is_locked=True)]
 
         return not_locked + locked
 
