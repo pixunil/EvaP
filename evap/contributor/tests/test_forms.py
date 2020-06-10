@@ -83,6 +83,7 @@ class ContributionFormsetTests(TestCase):
         """
             Asserts that locked (general) questionnaires cannot be changed.
         """
+        # TODO: Move this to EvaluationFormTests
         questionnaire = baker.make(Questionnaire, type=Questionnaire.Type.TOP, is_locked=False, visibility=Questionnaire.Visibility.EDITORS)
         locked_questionnaire = baker.make(Questionnaire, type=Questionnaire.Type.TOP, is_locked=True, visibility=Questionnaire.Visibility.EDITORS)
 
