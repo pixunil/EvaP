@@ -27,6 +27,52 @@
                 {% include 'bootstrap_form.html' with form=excel_form %}
             </div>
         </div>
+        {% if user_changes %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    {% trans 'Name changes' %}
+                </div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>{% trans 'Existing data' %}</th>
+                                <th>{% trans 'New data' %}</th>
+                                <th>{% trans 'Imported data' %}</th>
+                            </tr>
+                        </thead>
+                        {% for user_change in user_changes %}
+                            <tr>
+                                <td>
+                                    {{ user_change.existing.title }}
+                                    {{ user_change.existing.first_name }}
+                                    {{ user_change.existing.last_name }}<br />
+                                    {{ user_change.existing.email }}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                        <label class="btn btn-sm btn-light">
+                                            <input type="radio" name="user-{{ forloop.counter0 }}" value="0" />
+                                            {% trans 'Keep existing name' %}
+                                        </label>
+                                        <label class="btn btn-sm btn-light">
+                                            <input type="radio" name="user-{{ forloop.counter0 }}" value="1" />
+                                            {% trans 'Change to new name' %}
+                                        </label>
+                                    </div>
+                                </td>
+                                <td>
+                                    {{ user_change.new.title }}
+                                    {{ user_change.new.first_name }}
+                                    {{ user_change.new.last_name }}<br />
+                                    {{ user_change.new.email }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+        {% endif %}
         <div class="card card-submit-area{% if test_passed %} card-submit-area-2{% endif %} text-center mb-3">
             <div class="card-body">
                 {% if not test_passed %}

@@ -41,17 +41,23 @@ class UserData(CommonEqualityMixin):
         self.email = clean_email(email)
         self.is_responsible = is_responsible
 
-    def store_in_database(self):
-        user, created = UserProfile.objects.update_or_create(
-            email=self.email,
-            defaults={
-                'first_name': self.first_name,
-                'last_name': self.last_name,
-                'title': self.title,
-                'is_active': True
-            }
-        )
-        return user, created
+    def store_in_database(self, changes):
+        if not self.user_already_exists():
+            UserProfile.objects.create(
+                email=self.email,
+                first_name=self.first_name,
+                last_name=self.last_name,
+                title=self.title,
+                is_active=True,
+            )
+            return True
+        elif self.email in changes:
+                user = UserProfile.objects.get(email=self.email)
+                user.first_name = self.first_name
+                user.last_name = self.last_name
+                user.title = self.title
+                user.save()
+        return False
 
     def user_already_exists(self):
         return UserProfile.objects.filter(email=self.email).exists()
@@ -219,6 +225,7 @@ class ExcelImporter():
         self.success_messages = []
         self.errors = defaultdict(list)
         self.warnings = defaultdict(list)
+        self.user_changes = []
 
         # this is a dictionary to not let this become O(n^2)
         # ordered to always keep the order of the imported users the same when iterating over it
@@ -285,13 +292,10 @@ class ExcelImporter():
 
     @staticmethod
     def _create_user_data_mismatch_warning(user, user_data, test_run):
-        if test_run:
-            msg = format_html(_("The existing user would be overwritten with the following data:"))
-        else:
-            msg = format_html(_("The existing user was overwritten with the following data:"))
-        return (msg
-            + format_html("<br /> - {} ({})", ExcelImporter._create_user_string(user), _("existing"))
-            + format_html("<br /> - {} ({})", ExcelImporter._create_user_string(user_data), _("new")))
+        return {
+            'existing': user,
+            'new': user_data,
+        }
 
     @staticmethod
     def _create_user_inactive_warning(user, test_run):
@@ -313,11 +317,10 @@ class ExcelImporter():
         for user_data in self.users.values():
             try:
                 user = UserProfile.objects.get(email=user_data.email)
-                if ((user.title is not None and user.title != user_data.title)
+                if ((user.title is not None and user.title != user_data.title) # Why would we want to pass user.title = None; user_data.title = 'Dr.'?
                         or user.first_name != user_data.first_name
                         or user.last_name != user_data.last_name):
-                    self.warnings[ImporterWarning.NAME].append(
-                        self._create_user_data_mismatch_warning(user, user_data, test_run))
+                    self.user_changes.append(self._create_user_data_mismatch_warning(user, user_data, test_run))
                 if not user.is_active:
                     self.warnings[ImporterWarning.INACTIVE].append(self._create_user_inactive_warning(user, test_run))
             except UserProfile.DoesNotExist:
@@ -428,7 +431,7 @@ class EnrollmentImporter(ExcelImporter):
         with transaction.atomic():
             for user_data in self.users.values():
                 # this also marks the users active
-                __, created = user_data.store_in_database()
+                created = user_data.store_in_database(changes)
                 if created:
                     if user_data.is_responsible:
                         responsibles_created.append(user_data)
@@ -521,7 +524,7 @@ class UserImporter(ExcelImporter):
         for (sheet, row), (user_data) in self.associations.items():
             self.process_user(user_data, sheet, row)
 
-    def save_users_to_db(self):
+    def save_users_to_db(self, changes):
         """
             Stores the read data in the database. Errors might still
             occur because of the data already in the database.
@@ -531,7 +534,7 @@ class UserImporter(ExcelImporter):
         with transaction.atomic():
             for user_data in self.users.values():
                 try:
-                    user, created = user_data.store_in_database()
+                    user, created = user_data.store_in_database(changes)
                     new_participants.append(user)
                     if created:
                         created_users.append(user)
@@ -590,12 +593,12 @@ class UserImporter(ExcelImporter):
             if importer.errors:
                 importer.errors[ImporterError.GENERAL].append(
                     _("Errors occurred while parsing the input data. No data was imported."))
-                return [], importer.success_messages, importer.warnings, importer.errors
+                return [], importer.success_messages, importer.warnings, importer.errors, importer.user_changes
             if test_run:
                 importer.create_test_success_messages()
-                return importer.get_user_profile_list(), importer.success_messages, importer.warnings, importer.errors
+                return importer.get_user_profile_list(), importer.success_messages, importer.warnings, importer.errors, importer.user_changes
 
-            return importer.save_users_to_db(), importer.success_messages, importer.warnings, importer.errors
+            return importer.save_users_to_db(changes), importer.success_messages, importer.warnings, importer.errors, importer.user_changes
 
         except Exception as e:  # pylint: disable=broad-except
             importer.errors[ImporterError.GENERAL].append(_("Import finally aborted after exception: '%s'" % e))

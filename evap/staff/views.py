@@ -38,7 +38,7 @@ from evap.staff.forms import (AtLeastOneFormSet, ContributionForm, ContributionC
                               FaqQuestionForm,
                               FaqSectionForm, ModelWithImportNamesFormSet, ImportForm, QuestionForm, QuestionnaireForm, QuestionnairesAssignForm,
                               RemindResponsibleForm, SemesterForm, SingleResultForm, TextAnswerForm, UserBulkUpdateForm,
-                              UserForm, UserImportForm, UserMergeSelectionForm)
+                              UserForm, UserImportForm, UserMergeSelectionForm, UserNameChangesForm, UserNameChangesFormSet)
 from evap.staff.importers import EnrollmentImporter, UserImporter, PersonImporter, sorted_messages
 from evap.staff.tools import (bulk_update_users, delete_import_file, delete_navbar_cache_for_users,
                               forward_messages, get_import_file_content_or_raise, import_file_exists, merge_users,
@@ -1542,6 +1542,7 @@ def user_import(request):
     errors = {}
     warnings = {}
     success_messages = []
+    user_changes = []
 
     if request.method == "POST":
         operation = request.POST.get('operation')
@@ -1554,7 +1555,7 @@ def user_import(request):
             if excel_form.is_valid():
                 excel_file = excel_form.cleaned_data['excel_file']
                 file_content = excel_file.read()
-                __, success_messages, warnings, errors = UserImporter.process(file_content, test_run=True)
+                __, success_messages, warnings, errors, user_changes = UserImporter.process(file_content, test_run=True)
                 if not errors:
                     save_import_file(excel_file, request.user.id, import_type)
 
@@ -1565,11 +1566,14 @@ def user_import(request):
             delete_import_file(request.user.id, import_type)
             return redirect('staff:user_index')
 
+    Formset = formset_factory(form=UserNameChangesForm, formset=UserNameChangesFormSet)
+    formset = Formset()
+
     test_passed = import_file_exists(request.user.id, import_type)
     # casting warnings to a normal dict is necessary for the template to iterate over it.
     return render(request, "staff_user_import.html", dict(excel_form=excel_form,
         success_messages=success_messages, errors=sorted_messages(errors), warnings=sorted_messages(warnings),
-        test_passed=test_passed))
+        test_passed=test_passed, user_changes=user_changes))
 
 
 @manager_required

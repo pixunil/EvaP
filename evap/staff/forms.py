@@ -1,5 +1,6 @@
 from collections.abc import Iterable
 from datetime import datetime
+from enum import Enum
 import logging
 
 from django import forms
@@ -853,3 +854,10 @@ class ExportSheetForm(forms.Form):
             widget=forms.CheckboxSelectMultiple(),
             label=_("Course types")
         )
+
+
+class Action(Enum):
+    KEEP = 0
+    CHANGE = 1
+
+def

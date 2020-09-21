@@ -74,6 +74,18 @@ class TestUserImporter(TestCase):
             " -  Lucilia Manilium, luma@institution.example.com (existing)<br />"
             " -  Lucilia Manilium, lucilia.manilium@institution.example.com (new)"])
 
+    def test_user_name_change(self):
+        baker.make(UserProfile, first_name='Lucilia Paula', last_name="Manilium", email="lucilia.manilium@institution.example.com")
+
+        __, __, __, __, user_changes_test = UserImporter.process(self.valid_excel_content, test_run=True)
+        __, __, __, __, user_changes_no_test = UserImporter.process(self.valid_excel_content, test_run=False)
+
+        self.assertEqual(user_changes_test, user_changes_no_test)
+        self.assertEqual(user_changes_test, [{
+            'existing': None,
+            'new': None,
+        }])
+
     def test_ignored_duplicate_warning(self):
         __, __, warnings_test, __ = UserImporter.process(self.duplicate_excel_content, test_run=True)
         __, __, warnings_no_test, __ = UserImporter.process(self.duplicate_excel_content, test_run=False)

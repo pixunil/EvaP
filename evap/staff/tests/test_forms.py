@@ -1,6 +1,6 @@
 from unittest.mock import patch
 from datetime import datetime
-from django.forms.models import inlineformset_factory
+from django.forms.models import formset_factory, inlineformset_factory
 from django.test import TestCase
 from model_bakery import baker
 
@@ -10,7 +10,8 @@ from evap.evaluation.tests.tools import (create_evaluation_with_responsible_and_
                                          to_querydict)
 from evap.staff.forms import (ContributionForm, ContributionCopyForm, ContributionFormSet, CourseForm,
                               EvaluationEmailForm, EvaluationForm, EvaluationCopyForm,
-                              QuestionnaireForm, SingleResultForm, UserForm)
+                              QuestionnaireForm, SingleResultForm, UserForm, UserNameChangesForm)
+from evap.staff.importers import UserData
 from evap.results.tools import collect_results
 from evap.contributor.forms import EvaluationForm as ContributorEvaluationForm
 
@@ -802,3 +803,55 @@ class EvaluationCopyFormTests(TestCase):
         copied_evaluation = form.save()
         self.assertNotEqual(copied_evaluation, self.evaluation)
         self.assertEqual(Evaluation.objects.count(), 2)
+
+
+class UserNameChangesFormTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = baker.make(
+            UserProfile,
+            first_name='Toni',
+            last_name='Kuchenbuch',
+        )
+        cls.imported = UserData(
+            title='Dr.',
+            first_name='Tony',
+            last_name='Cakebook',
+            email='toni.kuchenbuch@institution.example.com',
+            is_responsible=False,
+        )
+
+    def test_default_save_will_keep_existing_name(self):
+        form = UserNameChangesForm({}, instance=self.user, imported=self.imported)
+        self.assertTrue(form.is_valid())
+        form.save()
+        self.assertEqual(self.user.full_name, 'Toni Kuchenbuch')
+
+    def test_change_to_imported_name(self):
+        data = {
+            'action': UserNameChangesForm.Action.CHANGE.value,
+        }
+        form = UserNameChangesForm(data, instance=self.user, imported=self.imported)
+        self.assertTrue(form.is_valid())
+        form.save()
+        self.assertEqual(self.user.full_name, 'Dr. Tony Cakebook')
+
+
+class UserNameChangesFormSetTests(TestCase):
+    def test(self):
+        Formset = formset_factory(form=UserNameChangesForm)
+        formset = Formset(initial=[{
+                'user': baker.make(
+                UserProfile,
+                first_name='Toni',
+                last_name='Kuchenbuch',
+            ),
+            'imported': UserData(
+                title='Dr.',
+                first_name='Tony',
+                last_name='Cakebook',
+                email='toni.kuchenbuch@institution.example.com',
+                is_responsible=False,
+            ),
+        }])
+        print(formset.cleaned_data)
