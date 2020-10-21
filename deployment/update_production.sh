@@ -31,6 +31,9 @@ set -x # print executed commands. enable this here to not print the if above.
 
 sudo -H -u $USERNAME git fetch
 
+# install sass
+./deployment/install_dart_sass.sh
+
 # Note that apache should not be running during most of the upgrade,
 # since then e.g. the backup might be incomplete or the code does not
 # match the database layout, or https://github.com/e-valuation/EvaP/issues/1237.
@@ -44,6 +47,7 @@ sudo -H -u $USERNAME $ENVDIR/bin/python manage.py dumpdata --natural-foreign --n
 sudo -H -u $USERNAME $ENVDIR/bin/pip install -r requirements.txt
 # sometimes, this fails for some random i18n test translation files.
 sudo -H -u $USERNAME $ENVDIR/bin/python manage.py compilemessages || true
+sudo -H -u $USERNAME $ENVDIR/bin/python manage.py scss --release
 sudo -H -u $USERNAME $ENVDIR/bin/python manage.py collectstatic --noinput
 # this fails if debug is set
 sudo -H -u $USERNAME $ENVDIR/bin/python manage.py compress --verbosity=0 || true

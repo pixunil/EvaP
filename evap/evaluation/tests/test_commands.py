@@ -173,6 +173,15 @@ class TestScssCommend(TestCase):
         )
 
     @patch('subprocess.run')
+    def test_scss_release_called(self, mock_subprocess_run):
+        management.call_command('scss', '--release')
+
+        mock_subprocess_run.assert_called_once_with(
+            ['sass', self.scss_path, self.css_path, '--style', 'compressed', '--no-source-map'],
+            check=True,
+        )
+
+    @patch('subprocess.run')
     def test_scss_called_with_no_sass_installed(self, mock_subprocess_run):
         mock_subprocess_run.side_effect = FileNotFoundError()
 
