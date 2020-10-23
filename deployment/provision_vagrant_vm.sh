@@ -46,6 +46,7 @@ sudo -H -u $USER $ENV_FOLDER/bin/pip install mod_wsgi
 
 # setup apache
 a2enmod expires
+a2enmod headers
 cp $REPO_FOLDER/deployment/wsgi.template.conf /etc/apache2/mods-available/wsgi.load
 sed -i -e "s=\${ENV_FOLDER}=$ENV_FOLDER=" /etc/apache2/mods-available/wsgi.load # note this uses '=' as alternate delimiter
 a2enmod wsgi
