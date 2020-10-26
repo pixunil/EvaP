@@ -1190,6 +1190,7 @@ class TextAnswer(Answer):
         NOT_REVIEWED = 'NR', _('not reviewed')
 
     state = models.CharField(max_length=2, choices=State.choices, verbose_name=_('state of answer'), default=State.NOT_REVIEWED)
+    is_flagged = models.BooleanField(verbose_name=_('reviewer flag'), default=False)
 
     class Meta:
         # Prevent ordering by date for privacy reasons. Otherwise, entries
