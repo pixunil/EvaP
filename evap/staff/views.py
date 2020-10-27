@@ -1157,6 +1157,10 @@ def evaluation_textanswers_update_publish(request):
         answer.hide()
     elif action == 'unreview':
         answer.unreview()
+    elif action == 'set_flag':
+        answer.is_flagged = True
+    elif action == 'clear_flag':
+        answer.is_flagged = False
     else:
         return HttpResponse(status=400)  # 400 Bad Request
     answer.save()
