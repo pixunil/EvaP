@@ -16,6 +16,12 @@ apt-get -q install -y python3.7 python3.7-dev python3.7-venv python3-pip gettext
 # install sass
 $REPO_FOLDER/deployment/install_dart_sass.sh
 
+# install yarn
+curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+apt-get -q update
+apt-get -q install --no-install-recommends yarn
+
 # setup postgres
 apt-get -q install -y postgresql
 sudo -u postgres createuser --createdb evap
@@ -75,9 +81,19 @@ sed -i -e "s/\${SECRET_KEY}/$(sudo head /dev/urandom | tr -dc A-Za-z0-9 | head -
 # setup vm auto-completion
 sudo cp $REPO_FOLDER/deployment/manage_autocompletion.sh /etc/bash_completion.d/
 
+sudo su evap
+
+# install nvm
+wget https://raw.githubusercontent.com/nvm-sh/nvm/v0.36.0/install.sh --no-verbose --output-document - | bash
+. "${HOME}/.nvm/nvm.sh"
+nvm install 15.4.0
+
+echo "nvm use node" >> /home/$USER/.bashrc
+
 # setup evap
 cd /$USER
 git submodule update --init
+yarn install
 sudo -H -u $USER $ENV_FOLDER/bin/python manage.py migrate --noinput
 sudo -H -u $USER $ENV_FOLDER/bin/python manage.py collectstatic --noinput
 sudo -H -u $USER $ENV_FOLDER/bin/python manage.py compilemessages

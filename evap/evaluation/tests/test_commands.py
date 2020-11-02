@@ -191,6 +191,31 @@ class TestScssCommend(TestCase):
         self.assertEqual(stderr.getvalue(), 'Could not find sass command\n\n')
 
 
+class TestTsCommend(TestCase):
+    def setUp(self):
+        self.ts_path = os.path.join(settings.STATICFILES_DIRS[0], 'ts')
+
+    @patch('subprocess.run')
+    def test_ts_compile(self, mock_subprocess_run):
+        management.call_command('ts', 'compile')
+
+        mock_subprocess_run.assert_called_once_with(
+            ['yarn', 'run', 'tsc', '--project', os.path.join(self.ts_path, 'tsconfig.json')],
+            check=True,
+        )
+
+    @patch('subprocess.run')
+    def test_ts_compile_with_watch(self, mock_subprocess_run):
+        mock_subprocess_run.side_effect = KeyboardInterrupt
+
+        management.call_command('ts', 'compile', '--watch')
+
+        mock_subprocess_run.assert_called_once_with(
+            ['yarn', 'run', 'tsc', '--project', os.path.join(self.ts_path, 'tsconfig.json'), '--watch'],
+            check=True,
+        )
+
+
 class TestUpdateEvaluationStatesCommand(TestCase):
     def test_update_evaluations_called(self):
         with patch('evap.evaluation.models.Evaluation.update_evaluations') as mock:
