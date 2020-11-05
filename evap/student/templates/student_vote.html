@@ -196,7 +196,7 @@
             // (the data gets deleted every time the form is submitted, i.e. also when the form had errors and is displayed again)
             sisyphus.saveAllData();
 
-            initTextAnswerWarnings($("textarea"), JSON.parse($("#text-answer-warnings").text()));
+            initTextAnswerWarnings(document.querySelectorAll("#student-vote-form textarea"), JSON.parse($("#text-answer-warnings").text()));
 
             var form = $('#student-vote-form');
 
