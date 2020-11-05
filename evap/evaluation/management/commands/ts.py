@@ -14,10 +14,13 @@ class Command(BaseCommand):
             '--watch', action='store_true',
             help='Watch scripts and recompile when they change.',
         )
+        test_parser = subparsers.add_parser('test')
 
     def handle(self, *args, **options):
         if options['command'] == 'compile':
             self.compile(*args, **options)
+        elif options['command'] == 'test':
+            self.test(*args, **options)
 
     def compile(self, watch, *args, **options):
         static_directory = settings.STATICFILES_DIRS[0]
@@ -39,4 +42,16 @@ class Command(BaseCommand):
         except KeyboardInterrupt:
             pass
         except subprocess.CalledProcessError:
+            pass
+
+    def test(self, *args, **options):
+        command = [
+            'yarn',
+            'run',
+            'jest',
+        ]
+
+        try:
+            subprocess.run(command, check=True) # nosec
+        except KeyboardInterrupt:
             pass

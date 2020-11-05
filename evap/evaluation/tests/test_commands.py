@@ -215,6 +215,15 @@ class TestTsCommend(TestCase):
             check=True,
         )
 
+    @patch('subprocess.run')
+    def test_ts_test(self, mock_subprocess_run):
+        management.call_command('ts', 'test')
+
+        mock_subprocess_run.assert_called_once_with(
+            ['yarn', 'run', 'jest'],
+            check=True,
+        )
+
 
 class TestUpdateEvaluationStatesCommand(TestCase):
     def test_update_evaluations_called(self):
