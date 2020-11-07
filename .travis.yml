@@ -38,4 +38,5 @@ jobs:
         - nvm install 15.4.0
       script:
         - python manage.py ts compile
+        - python manage.py ts generate_fixtures
         - python manage.py ts test
