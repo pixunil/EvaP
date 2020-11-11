@@ -16,7 +16,7 @@ import xlrd
 from evap.evaluation.models import (Contribution, Course, CourseType, Degree, EmailTemplate, Evaluation, FaqSection,
                                     FaqQuestion, Question, Questionnaire, RatingAnswerCounter, Semester, TextAnswer,
                                     UserProfile)
-from evap.evaluation.tests.tools import FuzzyInt, let_user_vote_for_evaluation, make_manager
+from evap.evaluation.tests.tools import FuzzyInt, generate_fixtures, let_user_vote_for_evaluation, make_manager
 from evap.results.tools import cache_results, get_results
 from evap.rewards.models import SemesterActivation, RewardPointGranting
 from evap.staff.forms import ContributionCopyForm, ContributionCopyFormSet, EvaluationCopyForm
@@ -373,6 +373,12 @@ class TestUserImportView(WebTestStaffMode):
     @classmethod
     def setUpTestData(cls):
         cls.manager = make_manager()
+
+    @generate_fixtures
+    def generate_fixtures(self):
+        return {
+            'normal': self.app.get(self.url, user=self.manager).content,
+        }
 
     def test_success_handling(self):
         """
