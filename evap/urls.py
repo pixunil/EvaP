@@ -17,8 +17,11 @@ urlpatterns = [
     url(r'^oidc/', include('mozilla_django_oidc.urls')),
 ]
 
-if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:
-    # pylint does not correctly evaluate this if, so it will raise an import-error on
-    # travis and a useless-suppression on a vagrant setup. Ignore both cases.
-    import debug_toolbar  # pylint: disable=import-error, useless-suppression
-    urlpatterns += [path('__debug__/', include(debug_toolbar.urls))]
+if settings.DEBUG:
+    urlpatterns += [path('development/', include('evap.development.urls'))]
+
+    if settings.ENABLE_DEBUG_TOOLBAR:
+        # pylint does not correctly evaluate this if, so it will raise an import-error on
+        # travis and a useless-suppression on a vagrant setup. Ignore both cases.
+        import debug_toolbar  # pylint: disable=import-error, useless-suppression
+        urlpatterns += [path('__debug__/', include(debug_toolbar.urls))]
