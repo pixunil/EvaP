@@ -200,7 +200,7 @@ class TestTsCommend(TestCase):
         management.call_command('ts', 'compile')
 
         mock_subprocess_run.assert_called_once_with(
-            ['yarn', 'run', 'tsc', '--project', os.path.join(self.ts_path, 'tsconfig.json')],
+            ['yarn', 'run', 'tsc', '--project', os.path.join(self.ts_path, 'tsconfig.compile.json')],
             check=True,
         )
 
@@ -211,7 +211,7 @@ class TestTsCommend(TestCase):
         management.call_command('ts', 'compile', '--watch')
 
         mock_subprocess_run.assert_called_once_with(
-            ['yarn', 'run', 'tsc', '--project', os.path.join(self.ts_path, 'tsconfig.json'), '--watch'],
+            ['yarn', 'run', 'tsc', '--project', os.path.join(self.ts_path, 'tsconfig.compile.json'), '--watch'],
             check=True,
         )
 
