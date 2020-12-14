@@ -31,7 +31,9 @@ jobs:
       script:
         - python manage.py test --reverse
     - name: Test Typescript
-      services: xvfb
+      services:
+        - postgresql
+        - xvfb
       install:
         - wget https://raw.githubusercontent.com/nvm-sh/nvm/v0.36.0/install.sh --no-verbose --output-document - | bash
         - . "${HOME}/.nvm/nvm.sh"
