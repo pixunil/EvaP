@@ -13,11 +13,20 @@ install:
   - pip install -r requirements-travis.txt
   - echo 'SECRET_KEY = "evap-travis-secret-key"' >> evap/localsettings.py
 
-env:
-  - COMMAND="pylint evap -j 0"
-  - COMMAND="deployment/test_backup_and_restore_on_travis.sh"
-  - COMMAND="coverage run manage.py test && codecov -X gcov"
-  - COMMAND="python manage.py test --debug-mode"
-  - COMMAND="python manage.py test --reverse"
-script:
-  - eval $COMMAND
+jobs:
+  include:
+    - name: Lint Python
+      script:
+        - pylint evap -j 0
+    - name: Test Backup Script
+      script:
+        - deployment/test_backup_and_restore_on_travis.sh
+    - name: Test Python
+      script:
+        - coverage run manage.py test && codecov -X gcov
+    - name: Test Python (debug mode)
+      script:
+        - python manage.py test --debug-mode
+    - name: Test Python (backwards)
+      script:
+        - python manage.py test --reverse
