@@ -33,6 +33,7 @@ jobs:
     - name: Test Typescript
       services:
         - postgresql
+        - redis
         - xvfb
       install:
         - pip install -r requirements-travis.txt
