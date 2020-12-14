@@ -35,6 +35,8 @@ jobs:
         - postgresql
         - xvfb
       install:
+        - pip install -r requirements-travis.txt
+        - echo 'SECRET_KEY = "evap-travis-secret-key"' >> evap/localsettings.py
         - wget https://raw.githubusercontent.com/nvm-sh/nvm/v0.36.0/install.sh --no-verbose --output-document - | bash
         - . "${HOME}/.nvm/nvm.sh"
         - nvm install 15.4.0
