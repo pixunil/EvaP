@@ -41,6 +41,7 @@ jobs:
         - wget https://raw.githubusercontent.com/nvm-sh/nvm/v0.36.0/install.sh --no-verbose --output-document - | bash
         - . "${HOME}/.nvm/nvm.sh"
         - nvm install 15.4.0
+        - yarn install
       script:
         - python manage.py ts compile
         - python manage.py ts generate_fixtures
